@@ -1,0 +1,52 @@
+version: '3.3'
+services:
+  app-build:
+    image: maven:3.6.0
+    volumes:
+      - .:/code
+    working_dir: /code/
+    command: mvn clean install -DskipTests
+  unit-test:
+    image: maven:3.6.0
+    volumes:
+      - .:/code
+    working_dir: /code/
+    command: mvn -Dtest=*Unit* test
+  it-test:
+    image: maven:3.6.0
+    volumes:
+      - .:/code
+    working_dir: /code/
+    command: mvn -Dtest=*Integration* test
+  app:
+    image: openjdk:8-jdk
+    volumes:
+      - ./target/:/code/
+    working_dir: /code/
+    command: java -jar speer-backend-assessment-0.0.1-SNAPSHOT.jar
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db
+    links:
+      - db
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: notesuser
+      MYSQL_PWD: notespwd
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: notes-db
+      MYSQL_USER: notesuser
+      MYSQL_PASSWORD: notespwd
+      MYSQL_ROOT_PASSWORD: notespwd
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - my-db:/var/lib/mysql
+volumes:
+  my-db:
